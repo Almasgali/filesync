@@ -7,8 +7,10 @@ import org.springframework.util.DigestUtils;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
 import ru.almasgali.filesync_server.data.dto.FileResponse;
+import ru.almasgali.filesync_server.data.model.File;
 import ru.almasgali.filesync_server.exceptions.storage.StorageException;
 import ru.almasgali.filesync_server.exceptions.storage.StorageFileNotFoundException;
+import ru.almasgali.filesync_server.repository.FileRepository;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,25 +20,36 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class StorageService {
 
     private final Path rootLocation = Path.of("./storage");
+    private final FileRepository fileRepository;
 
-    public StorageService() {
+    public StorageService(FileRepository fileRepository) {
+        this.fileRepository = fileRepository;
         init();
     }
 
     public void store(MultipartFile file, long updatedAt, String username) {
+        String filename = file.getOriginalFilename();
+        Optional<File> existing = fileRepository.findByNameAndUsername(filename, username);
+        if (existing.isPresent()) {
+            if (existing.get().getUpdatedAt() > updatedAt) {
+                return;
+            }
+        }
         try {
             if (file.isEmpty()) {
                 throw new StorageException("Failed to store empty file.");
             }
             Path destinationFile = this.rootLocation
                     .resolve(Path.of(username))
-                    .resolve(Paths.get(file.getOriginalFilename()))
+                    .resolve(Paths.get(filename))
                     .normalize().toAbsolutePath();
+
             Files.createDirectories(destinationFile);
             try (InputStream is = file.getInputStream()) {
                 Files.copy(is, destinationFile,

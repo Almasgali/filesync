@@ -21,13 +21,13 @@ public class File {
 
     private String name;
 
-    private long userId;
+    private String username;
 
     @CreationTimestamp
     @Column(updatable = false, name = "created_at")
-    private Date createdAt;
+    private long createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
-    private Date updatedAt;
+    private long updatedAt;
 }
