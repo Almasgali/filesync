@@ -26,7 +26,7 @@ public class FileController {
     private final StorageService storageService;
 
     @ResponseStatus(HttpStatus.OK)
-    @GetMapping("/list")
+    @GetMapping()
     public List<FileResponse> getFiles(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         return storageService.loadAll(userDetails.getUsername());
@@ -42,13 +42,12 @@ public class FileController {
     }
 
     @ResponseBody
-    @GetMapping
-    public ResponseEntity<Resource> getFile(@RequestBody FileRequest request,
-                        HttpServletResponse response,
-                        Authentication authentication) {
+    @GetMapping("/{filename}")
+    public ResponseEntity<Resource> getFile(@PathVariable String filename,
+                                            Authentication authentication) {
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Resource file = storageService.loadAsResource(request.getName(), userDetails.getUsername());
+        Resource file = storageService.loadAsResource(filename, userDetails.getUsername());
 
         if (file == null)
             return ResponseEntity.notFound().build();

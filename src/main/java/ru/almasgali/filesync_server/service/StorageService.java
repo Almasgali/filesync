@@ -19,6 +19,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,10 +39,18 @@ public class StorageService {
         String filename = file.getOriginalFilename();
         Optional<File> existing = fileRepository.findByNameAndUsername(filename, username);
         if (existing.isPresent()) {
-            if (existing.get().getUpdatedAt() > updatedAt) {
+            if (existing.get()
+                    .getUpdatedAt()
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant().toEpochMilli() > updatedAt) {
                 return;
             }
         }
+        File fileInfo = File.builder()
+                .name(filename)
+                .username(username)
+                .createdAt(LocalDateTime.now()).build();
+        fileRepository.save(fileInfo);
         try {
             if (file.isEmpty()) {
                 throw new StorageException("Failed to store empty file.");
