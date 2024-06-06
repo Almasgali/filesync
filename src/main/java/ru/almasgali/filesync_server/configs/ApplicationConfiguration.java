@@ -1,8 +1,10 @@
 package ru.almasgali.filesync_server.configs;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -12,9 +14,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import ru.almasgali.filesync_server.repository.UserRepository;
 
 @Configuration
-@RequiredArgsConstructor
+@PropertySource("classpath:application.properties")
 public class ApplicationConfiguration {
-    private final UserRepository userRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Bean
     UserDetailsService userDetailsService() {
@@ -35,14 +39,4 @@ public class ApplicationConfiguration {
 
         return new ProviderManager(authenticationProvider);
     }
-
-//    @Bean
-//    AuthenticationProvider authenticationProvider() {
-//        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-//
-//        authProvider.setUserDetailsService(userDetailsService());
-//        authProvider.setPasswordEncoder(passwordEncoder());
-//
-//        return authProvider;
-//    }
 }

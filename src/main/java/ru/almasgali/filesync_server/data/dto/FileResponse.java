@@ -7,5 +7,5 @@ import lombok.Data;
 @Builder
 public class FileResponse {
     private String name;
-    private String hash;
+    private long updatedAt;
 }

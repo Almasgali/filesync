@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import ru.almasgali.filesync_server.repository.UserRepository;
 
 @Service
-@RequiredArgsConstructor
 public class JwtService {
     @Value("${security.jwt.secret-key}")
     private String secretKey;

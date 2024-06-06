@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import ru.almasgali.filesync_server.data.dto.AuthRequest;
 import ru.almasgali.filesync_server.data.dto.RegisterRequest;
 import ru.almasgali.filesync_server.data.model.User;
+import ru.almasgali.filesync_server.exceptions.auth.UserAlreadyExistsException;
 import ru.almasgali.filesync_server.repository.UserRepository;
 
 @Service
@@ -21,6 +22,13 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     public User signup(RegisterRequest request) {
+
+        String username = request.getUsername();
+
+        if (userRepository.findByUsername(username).isPresent()) {
+            throw new UserAlreadyExistsException("User with username " + username + " already exists.");
+        }
+
         User user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword())).build();

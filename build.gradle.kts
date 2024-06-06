@@ -25,6 +25,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-test")
+	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.security:spring-security-config:6.3.0")
 
 	implementation("io.jsonwebtoken:jjwt-api:0.11.5")
@@ -34,6 +36,7 @@ dependencies {
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("org.postgresql:postgresql")
 	annotationProcessor("org.projectlombok:lombok")
+	testImplementation("junit:junit:4.4")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
