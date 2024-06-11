@@ -8,8 +8,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
+import ru.almasgali.filesync_server.data.dto.FileResponse;
 import ru.almasgali.filesync_server.data.model.File;
 import ru.almasgali.filesync_server.exceptions.common.ConstraintViolationException;
+import ru.almasgali.filesync_server.exceptions.storage.OldVersionException;
 import ru.almasgali.filesync_server.exceptions.storage.StorageException;
 import ru.almasgali.filesync_server.exceptions.storage.FileNotFoundException;
 import ru.almasgali.filesync_server.repository.FileRepository;
@@ -54,7 +56,7 @@ public class StorageService {
                     .atZone(ZoneId.systemDefault())
                     .toInstant().toEpochMilli();
             if (exisitingUpdatedAt > updatedAt) {
-                return;
+                throw new OldVersionException("Existing file has newer version");
             } else {
                 fileRepository.deleteById(existing.get().getId());
             }
@@ -78,15 +80,23 @@ public class StorageService {
         }
     }
 
-    public List<String> loadAll(String username) {
-        Path fullPath = this.rootLocation.resolve(hashUsername(username));
-        try {
-            return Files.walk(fullPath, 1)
-                    .filter(path -> !path.equals(fullPath))
-                    .map(path -> path.getFileName().toString()).toList();
-        } catch (IOException e) {
-            throw new StorageException("Failed to read stored files", e);
-        }
+    public List<FileResponse> loadAll(String username) {
+        return fileRepository.findByUsername(username).stream().map(
+                f -> FileResponse.builder()
+                        .name(f.getName())
+                        .updatedAt(f.getUpdatedAt()
+                                .atZone(ZoneId.systemDefault())
+                                .toInstant().toEpochMilli()).build()).toList();
+//        Path fullPath = this.rootLocation.resolve(hashUsername(username));
+//        try {
+//            return Files.walk(fullPath, 1)
+//                    .filter(path -> !path.equals(fullPath))
+//                    .map(path -> FileResponse.builder()
+//                            .name(path.getFileName().toString())
+//                            .updatedAt()).toList();
+//        } catch (IOException e) {
+//            throw new StorageException("Failed to read stored files", e);
+//        }
 
     }
 
@@ -115,10 +125,6 @@ public class StorageService {
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public void deleteAll() {
-        FileSystemUtils.deleteRecursively(rootLocation.toFile());
     }
 
     public void init() {

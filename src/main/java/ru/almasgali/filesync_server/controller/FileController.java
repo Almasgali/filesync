@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ru.almasgali.filesync_server.data.dto.FileResponse;
 import ru.almasgali.filesync_server.service.StorageService;
 
 import java.util.List;
@@ -28,7 +29,7 @@ public class FileController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping
-    public List<String> getFiles(Authentication authentication) {
+    public List<FileResponse> getFiles(Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         return storageService.loadAll(userDetails.getUsername());
     }

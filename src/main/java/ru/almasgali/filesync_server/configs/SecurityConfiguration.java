@@ -30,7 +30,12 @@ public class SecurityConfiguration {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizationManagerRequestMatcherRegistry -> {
                     authorizationManagerRequestMatcherRegistry
-                            .requestMatchers("/user/register", "/user/auth")
+                            .requestMatchers(
+                                    "/user/register",
+                                    "/user/auth",
+                                    "/v3/**",
+                                    "/swagger-ui.html",
+                                    "/swagger-ui/**")
                             .permitAll()
                             .anyRequest()
                             .authenticated();

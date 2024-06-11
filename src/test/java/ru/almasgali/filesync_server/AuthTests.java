@@ -1,20 +1,15 @@
 package ru.almasgali.filesync_server;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-
-import java.nio.file.Path;
+import ru.almasgali.util.TestsUtil;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -22,14 +17,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(locations = "classpath:application-test.properties")
-class FilesyncServerApplicationTests {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+class AuthTests {
 
     @Value("${server.check-state}")
     private String isTest;
-    private final Path testFile = Path.of("/src/test/resources/a.txt");
     @Autowired
     private MockMvc mockMvc;
-    private String testUserJWT;
 
     @Test
     void contextLoads() {
@@ -41,7 +35,23 @@ class FilesyncServerApplicationTests {
     void shortUsername() throws Exception {
         mockMvc.perform(post("/user/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(constructAuthRequest("tst", "testtest")))
+                        .content(TestsUtil.constructAuthRequest("tst", "testtest")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void noUsername() throws Exception {
+        mockMvc.perform(post("/user/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TestsUtil.constructAuthRequest("", "testtest")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void noContent() throws Exception {
+        mockMvc.perform(post("/user/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(""))
                 .andExpect(status().isBadRequest());
     }
 
@@ -49,68 +59,72 @@ class FilesyncServerApplicationTests {
     void shortPassword() throws Exception {
         mockMvc.perform(post("/user/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(constructAuthRequest("test", "1")))
+                        .content(TestsUtil.constructAuthRequest("test", "1")))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
+    void noPassword() throws Exception {
+        mockMvc.perform(post("/user/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TestsUtil.constructAuthRequest("test", "")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void nullUsernameAndPassword() throws Exception {
+        mockMvc.perform(post("/user/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TestsUtil.constructAuthRequest(null, null)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Order(1)
     void registerUser() throws Exception {
         mockMvc.perform(post("/user/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(constructAuthRequest("test", "testtest")))
+                        .content(TestsUtil.constructAuthRequest("test", "testtest")))
                 .andExpect(status().isCreated());
     }
 
     @Test
+    @Order(2)
     void registerExistingUser() throws Exception {
         mockMvc.perform(post("/user/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(constructAuthRequest("test", "testtest")))
+                        .content(TestsUtil.constructAuthRequest("test", "testtest")))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
+    @Order(3)
     void authUser() throws Exception {
         MvcResult res = mockMvc.perform(post("/user/auth")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(constructAuthRequest("test", "testtest")))
+                        .content(TestsUtil.constructAuthRequest("test", "testtest")))
                 .andExpect(status().isOk())
                 .andReturn();
 
         String content = res.getResponse().getContentAsString();
-        String token = content.substring(10, content.length() - 2);
-        testUserJWT = token;
+        Assertions.assertTrue(content.contains("token"));
     }
 
     @Test
+    @Order(4)
     void authWrongUsername() throws Exception {
         mockMvc.perform(post("/user/auth")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(constructAuthRequest("wrong", "testtest")))
+                        .content(TestsUtil.constructAuthRequest("wrong", "testtest")))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
+    @Order(5)
     void authWrongPassword() throws Exception {
         mockMvc.perform(post("/user/auth")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(constructAuthRequest("test", "wrong")))
+                        .content(TestsUtil.constructAuthRequest("test", "wrongwrong")))
                 .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void uploadFileNegativeTimestamp() throws Exception {
-
-//        Resource fileResource = new UrlResource(testFile.toUri());
-//
-//        mockMvc.perform(post("/files")
-//                        .header("Authorization", "Bearer " + testUserJWT)
-//                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
-//                        .content(constructAuthRequest("test", "wrong")))
-//                .andExpect(status().isUnauthorized());
-    }
-
-    private String constructAuthRequest(String username, String password) {
-        return "{\"username\" : \"" + username + "\", \"password\" : \"" + password + "\" }";
     }
 }
